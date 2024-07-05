@@ -26,7 +26,7 @@ def SiPMGain(sipm_data):
         # fit parameters
         mu_p0 = np.array([0.005*(i+1) for i in range(NFIT)])
         sig_p0 = np.array([0.0005]*NFIT)
-        A_p0 = np.array([np.maximum(Ns[i_sipm])/1.5**i for i in range(NFIT)])
+        A_p0 = np.array([np.max(Ns[i_sipm])/1.5**i for i in range(NFIT)])
         
         p0 = sum([[A_p0[i], mu_p0[i], sig_p0[i]] for i in range(NFIT)], [])
         
