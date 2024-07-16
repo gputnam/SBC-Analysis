@@ -9,6 +9,7 @@ import numpy.matlib
 
 from EventAnalysis import EventAnalysis as eva
 from AcousticT0 import AcousticAnalysis as aa
+from ExposureAnalysis import ExposureAnalysis as expa 
 from DataHandling.GetSBCEvent import GetEvent as get_event
 from DataHandling.WriteBinary import WriteBinaryNtupleFile as wb
 from DataHandling.ReadBinary import ReadBlock as rb
@@ -120,14 +121,19 @@ def ProcessSingleRun2(rundir, dataset='SBC-2017', recondir='.', process_list=Non
                 loadlist.append('event')
             elif any(process.lower().strip() == x for x in ['acoustic']):
                 loadlist.append('fastDAQ')
+            elif process.lower().strip() == 'exposure':
+                loadlist.append('slowDAQ')
+                loadlist.append('event')
         loadlist = list(set(loadlist))
     else:
         loadlist = ['~']
 
     event_out = []
+    exposure_out = []
     acoustic_out = []
 
     event_default = eva(None)
+    exposure_default = expa(None)
     acoustic_default = aa(None, None)
     # image_default = BubbleFinder(None, None, None ,None, None, None)
 
@@ -138,6 +144,7 @@ def ProcessSingleRun2(rundir, dataset='SBC-2017', recondir='.', process_list=Non
     for ev in eventlist:
         t0 = time.time()
         print('Starting event ' + runname + '/' + str(ev))
+        print(loadlist)
         npev = np.array([ev], dtype=np.int32)
         thisevent = get_event(rundir, ev, *loadlist)
         print('Time to load event:  '.rjust(35) +
@@ -155,6 +162,20 @@ def ProcessSingleRun2(rundir, dataset='SBC-2017', recondir='.', process_list=Non
                 event_out[-1]['ev'] = npev
             et = time.time() - t1
             print('Event analysis:  '.rjust(35) + str(et) + ' seconds')
+
+        if "exposure" in process_list:
+            # zeroth order of business:  copy event data
+            t1 = time.time()
+            if dataset == 'SBC-2017':
+                try:
+                    exposure_out.append(expa(thisevent))
+                except:
+                    raise
+                    exposure_out.append(copy.deepcopy(exposure_default))
+            exposure_out[-1]['runid'] = runid
+            exposure_out[-1]['ev'] = npev
+            et = time.time() - t1
+            print('Exposure analysis:  '.rjust(35) + str(et) + ' seconds')
 
         if "acoustic" in process_list:
             # Acoustic analysis
@@ -186,6 +207,11 @@ def ProcessSingleRun2(rundir, dataset='SBC-2017', recondir='.', process_list=Non
     if "event" in process_list:
         wb(os.path.join(run_recondir,
                         'EventAnalysis_' + runname + '.bin'), event_out,
+           rowdef=1, initialkeys=['runid', 'ev'], drop_first_dim=False)
+
+    if "exposure" in process_list:
+        wb(os.path.join(run_recondir,
+                        'ExposureAnalysis_' + runname + '.bin'), exposure_out,
            rowdef=1, initialkeys=['runid', 'ev'], drop_first_dim=False)
 
     if "acoustic" in process_list:
