@@ -1,5 +1,5 @@
-numpy==1.23.5
-scipy==1.9.3
-matplotlib==3.6.2
-jupyterlab==3.5.1
+numpy==1.19.5
+scipy==1.5.4
+matplotlib==3.3.4
+jupyterlab==3.3.0a1
 jupyter
